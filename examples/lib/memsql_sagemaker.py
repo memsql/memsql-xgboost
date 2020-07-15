@@ -38,10 +38,9 @@ def load_xgboost(s3_path):
 
     
 def xgb_to_memsql(xgb, features, conn):
-    mm = {'f' + str(i): name for i, name in enumerate(features)}
     trees = split_trees(xgb.trees_to_dataframe())
-    sqls = [tree_to_func_def(t, mm) for t in trees]
-    sqls.append(tree_to_main_func(trees, features, mm))
+    sqls = [tree_to_func_def(t) for t in trees]
+    sqls.append(tree_to_main_func(trees, features))
     for s in sqls:
         assert 1 == conn.query(s)
 
@@ -67,32 +66,32 @@ def format_sql_lines(lines: List[str], prefix: str) -> str:
     return f"\n{prefix}".join(lines)
 
 
-def node_to_statement(node_id: str, tree: DataFrame, prefix: str, mm) -> str:
+def node_to_statement(node_id: str, tree: DataFrame, prefix: str) -> str:
     prefix += '\t'
     node = tree[tree['ID'] == node_id].iloc[0]
     if node["Feature"] == "Leaf":
         return format_sql_lines([f"RETURN {node['Gain']};"], prefix)
     return format_sql_lines([
-        f"IF {mm[node['Feature']]} < {node['Split']} THEN",
-        node_to_statement(node["Yes"], tree, prefix, mm),
+        f"IF `{node['Feature']}` < {node['Split']} THEN",
+        node_to_statement(node["Yes"], tree, prefix),
         "ELSE",
-        node_to_statement(node["No"], tree, prefix, mm),
+        node_to_statement(node["No"], tree, prefix),
         "END IF;",
     ], prefix)
 
 
-def tree_to_statements(tree: DataFrame, mm) -> str:
+def tree_to_statements(tree: DataFrame) -> str:
     used_nodes = set(tree[~tree["Yes"].isnull()]["Yes"]).union(set(tree[~tree["No"].isnull()]["No"]))
     roots = set(tree[~tree["ID"].isin(used_nodes)]["ID"])
     assert len(roots) == 1, f"expected to find one root, got {len(roots)}: {roots}"
     root = list(roots)[0]
-    return node_to_statement(root, tree, "", mm)
+    return node_to_statement(root, tree, "")
 
 
-def tree_to_func_def(tree: DataFrame, mm) -> str:
-    features = sorted([mm[f] for f in set(tree['Feature']) if f != "Leaf"])
-    args = ", ".join([f"{f} DOUBLE NOT NULL" for f in features])
-    function_body = tree_to_statements(tree, mm)
+def tree_to_func_def(tree: DataFrame) -> str:
+    features = sorted(f for f in set(tree['Feature']) if f != "Leaf")
+    args = ", ".join([f"`{f}` DOUBLE NOT NULL" for f in features])
+    function_body = tree_to_statements(tree)
     func_name = tree_to_func_name(tree)
 
     return format_sql_lines([
@@ -103,22 +102,22 @@ def tree_to_func_def(tree: DataFrame, mm) -> str:
     ], "")
 
     
-def tree_to_function_call(tree: DataFrame, mm) -> str:
+def tree_to_function_call(tree: DataFrame) -> str:
     func_name = tree_to_func_name(tree)
-    features = sorted([mm[f] for f in set(tree['Feature']) if f != "Leaf"])
+    features = sorted(f for f in set(tree['Feature']) if f != "Leaf")
     return f"{func_name}({', '.join(features)})"
 
 
-def trees_to_functions_sum(trees: List[DataFrame], prefix, mm) -> str:
-    return '+'.join([tree_to_function_call(t, mm) for t in trees])
+def trees_to_functions_sum(trees: List[DataFrame], prefix) -> str:
+    return '+'.join([tree_to_function_call(t) for t in trees])
 
 
-def tree_to_main_func(trees: List[DataFrame], features, mm) -> str:
+def tree_to_main_func(trees: List[DataFrame], features) -> str:
     #features = sorted([f for f in set(sum([list(tree['Feature']) for tree in trees], [])) if f != "Leaf"])
     args = ", ".join([f"{f} DOUBLE NOT NULL" for f in features])
     return format_sql_lines([
         f"CREATE OR REPLACE FUNCTION apply_trees({args}) RETURNS DOUBLE NOT NULL AS",
         "BEGIN",
-        "\tRETURN SIGMOID(" + trees_to_functions_sum(trees, "\t", mm) + ");",
+        "\tRETURN SIGMOID(" + trees_to_functions_sum(trees, "\t") + ");",
         "END"
     ], "")
