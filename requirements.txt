@@ -3,3 +3,4 @@ xgboost==1.1.1
 pandas==1.0.5
 memsql==3.1.0
 scikit-learn==0.23.1
+boto3==1.14.20
