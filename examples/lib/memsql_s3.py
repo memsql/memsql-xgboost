@@ -2,7 +2,7 @@ import io
 import pickle
 import tarfile
 from xgboost import Booster
-from typing import Optional, List
+from typing import Optional, List, Dict
 from boto3.session import Session
 from memsql.common.database import Connection
 
@@ -29,6 +29,9 @@ def load_xgboost_from_s3(s3_path: str, session: Session, model_file_name='xgboos
     raise Exception(f'Could not find {model_file_name} in file "{s3_path}"')
 
 
-def xgb_model_path_to_memsql(xgb_s3_path: str, features: List[str], conn: Connection, session: Session) -> None:
+def xgb_model_path_to_memsql(xgb_s3_path: str, features: List[str], conn: Connection, session: Session,
+                             feature_names: List[str] = None) -> None:
     xgb = load_xgboost_from_s3(xgb_s3_path, session)
+    if feature_names is not None:
+        xgb.feature_names = feature_names
     upload_xgb_to_memsql(xgb, features, conn)
