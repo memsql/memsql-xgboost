@@ -5,3 +5,4 @@ memsql==3.1.0
 scikit-learn==0.23.1
 boto3==1.14.20
 sagemaker==1.69.0
+lightfm==1.15

@@ -1,3 +1,5 @@
 .ipynb_checkpoints/
 __pycache__/
 examples/ex2_train.csv
+examples/ex5_movies.csv
+examples/ex5_users.csv
