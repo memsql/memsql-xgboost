@@ -56,7 +56,7 @@ def tree_to_statements(tree: DataFrame) -> str:
 
 def tree_to_func_def(tree: DataFrame) -> str:
     features = sorted([f for f in set(tree['Feature']) if f != "Leaf"])
-    args = ", ".join([f"{f} DOUBLE NOT NULL" for f in features])
+    args = ", ".join([f"`{f}` DOUBLE NOT NULL" for f in features])
     function_body = tree_to_statements(tree)
     func_name = tree_to_func_name(tree)
 
@@ -70,7 +70,7 @@ def tree_to_func_def(tree: DataFrame) -> str:
 
 def tree_to_function_call(tree: DataFrame) -> str:
     func_name = tree_to_func_name(tree)
-    features = sorted([f for f in set(tree['Feature']) if f != "Leaf"])
+    features = sorted([f"`{f}`" for f in set(tree['Feature']) if f != "Leaf"])
     return f"{func_name}({', '.join(features)})"
 
 
