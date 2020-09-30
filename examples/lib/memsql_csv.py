@@ -16,9 +16,13 @@ def load_csv_to_existing_table(csv_path: str, table_name: str, conn: Connection)
                       f"FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES") > 0
 
 
-def export_as_csv(conn, dest, table, label, columns, config, creds, where='1=1'):
+def export_as_csv(conn, dest, table, label, columns, config, creds, where=None):
     columns = ','.join(map(lambda s: f"`{s}`", [label] + columns))
     config = json.dumps(config)
     creds = json.dumps(creds)
-    query = f"SELECT {columns} FROM {table} WHERE {where} ORDER BY id INTO S3 '{dest}' CONFIG '{config}' CREDENTIALS '{creds}' FIELDS TERMINATED BY ','"
+    if where:
+        where = 'WHERE ' + where
+    else:
+        where = ''
+    query = f"SELECT {columns} FROM {table} {where} ORDER BY id INTO S3 '{dest}' CONFIG '{config}' CREDENTIALS '{creds}' FIELDS TERMINATED BY ','"
     conn.query(query)
