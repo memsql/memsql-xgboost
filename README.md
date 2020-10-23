@@ -8,8 +8,6 @@ This repository contains examples of how machine learning models can be evaluate
 2. [[link]](examples/2.%20Training%20xgboost%20model%20on%20AWS%20sagemaker%20and%20deploy%20to%20memsql.ipynb) Training an XGBoost model using an [AWS Sagemaker](https://aws.amazon.com/sagemaker/), deploying and evaluating it on a MemSQL instance.
 3. [[link]](examples/3.%20Ingesting%20data%20from%20Kafka%20and%20running%20classifier%20on%20it.ipynb) Evaluating an XGBoost model in a MemSQL instance with data that is streamed from Kafka.
 4. [[link]](examples/4.%20Big%20data%20example.ipynb) Evaluating an XGBoost model in a MemSQL instance on a TPC-H 50GB dataset.
-5. [[link]](examples/5.%20Recommendations,%20low-rank%20matrix%20factorization%20and%20vectorized%20dot-products.ipynb) Implementing a recommendation engine in a MemSQL instance based on Matrix factorization. This method is a very popular implementation used by Spotify, Netflix, etc.
-6. [[link]](examples/6.%20Model%20cascades.ipynb) Using MemSQL user-defined functions to evaluate cascaded models on the fly. This allows models to be applied sequentially, from simple to complex, while narrowing the dataset with each step.
 
 ## Setup
 
